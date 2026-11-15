@@ -1,0 +1,361 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile, gamification stats, and app preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "photoURL": {
+          "type": "string",
+          "maxLength": 65000
+        },
+        "xp": {
+          "type": "number"
+        },
+        "level": {
+          "type": "number"
+        },
+        "streak": {
+          "type": "number"
+        },
+        "longestStreak": {
+          "type": "number"
+        },
+        "totalCompleted": {
+          "type": "number"
+        },
+        "highPriorityCompleted": {
+          "type": "number"
+        },
+        "earlyBirdCompleted": {
+          "type": "number"
+        },
+        "lastCompletedDate": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "unlockedBadges": {
+          "type": "array",
+          "description": "List of unlocked badge IDs, bounded to 30."
+        },
+        "settings": {
+          "type": "object",
+          "description": "User customization preferences."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "displayName",
+        "email",
+        "xp",
+        "level",
+        "streak",
+        "longestStreak",
+        "totalCompleted",
+        "highPriorityCompleted",
+        "earlyBirdCompleted",
+        "lastCompletedDate",
+        "unlockedBadges",
+        "settings",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "User task item with recurring daily reminder, deadline, folder, tags, and subtasks.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "completed": {
+          "type": "boolean"
+        },
+        "completedAt": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "lastCompletedDate": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "dueDate": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "reminderTime": {
+          "type": "string",
+          "maxLength": 10
+        },
+        "recurrence": {
+          "type": "string",
+          "enum": ["none", "daily", "weekdays", "weekends", "weekly", "custom"]
+        },
+        "customDays": {
+          "type": "array",
+          "description": "Array of weekday numbers 0-6, max 7."
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        },
+        "folderId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "tags": {
+          "type": "array",
+          "description": "Bounded list of tag IDs, max 10."
+        },
+        "subtasks": {
+          "type": "array",
+          "description": "Bounded list of subtask items, max 20."
+        },
+        "calendarEventId": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "title",
+        "notes",
+        "completed",
+        "completedAt",
+        "lastCompletedDate",
+        "dueDate",
+        "reminderTime",
+        "recurrence",
+        "customDays",
+        "priority",
+        "folderId",
+        "tags",
+        "subtasks",
+        "calendarEventId",
+        "archived",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Folder": {
+      "title": "Folder",
+      "description": "Categorization folder for organizing tasks.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "color": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "icon": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "color", "icon", "createdAt", "updatedAt"]
+    },
+    "Tag": {
+      "title": "Tag",
+      "description": "Customizable tag label for tasks.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "color": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "color", "createdAt", "updatedAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Daily completion metrics for streak and progress reporting.",
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "maxLength": 20,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "completedCount": {
+          "type": "number"
+        },
+        "highPriorityCount": {
+          "type": "number"
+        },
+        "xpEarned": {
+          "type": "number"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["date", "ownerId", "completedCount", "highPriorityCount", "xpEarned", "updatedAt"]
+    },
+    "TaskTemplate": {
+      "title": "TaskTemplate",
+      "description": "Reusable task template for quick routine creation.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "tasks": {
+          "type": "array",
+          "description": "Bounded list of template task definitions, max 15."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "ownerId", "name", "description", "tasks", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-only profile, gamification progression, and customization settings."
+    },
+    "/users/{userId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "User-owned tasks and daily recurring reminders."
+    },
+    "/users/{userId}/folders/{folderId}": {
+      "schema": { "$ref": "#/entities/Folder" },
+      "description": "User-owned categorization folders."
+    },
+    "/users/{userId}/tags/{tagId}": {
+      "schema": { "$ref": "#/entities/Tag" },
+      "description": "User-owned customizable tags."
+    },
+    "/users/{userId}/activityLogs/{dateId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Daily completion counts and XP logs."
+    },
+    "/users/{userId}/templates/{templateId}": {
+      "schema": { "$ref": "#/entities/TaskTemplate" },
+      "description": "Reusable task routine templates."
+    }
+  }
+}

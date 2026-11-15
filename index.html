@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task X — Daily Tasks, Recurring Reminders & Calendar</title>
+    <meta
+      name="description"
+      content="Task X is an offline-first minimalist daily task planner with recurring reminders, customizable folders and tags, calendar deadlines, streaks, levels, badges, and smart AI task assistance."
+    />
+    <meta property="og:title" content="Task X — Daily Tasks, Recurring Reminders & Calendar" />
+    <meta
+      property="og:description"
+      content="Task X is an offline-first minimalist daily task planner with recurring reminders, customizable folders and tags, calendar deadlines, streaks, levels, badges, and smart AI task assistance."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Task X" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <script>
+      window.__txDeferredPrompt = null;
+      window.__txAppInstalled = false;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__txDeferredPrompt = e;
+        window.dispatchEvent(new CustomEvent('tx-pwa-installable'));
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__txDeferredPrompt = null;
+        window.__txAppInstalled = true;
+      });
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="bg-[#FAFAFA] text-slate-900 dark:bg-[#000000] dark:text-slate-100 antialiased selection:bg-blue-600/20">
+    <script>
+      (function () {
+        try {
+          var allowed = ['obsidian', 'cobalt', 'emerald', 'sunset', 'grid', 'mono'];
+          var icon = localStorage.getItem('taskx_app_icon') || 'obsidian';
+          if (allowed.indexOf(icon) === -1) icon = 'obsidian';
+          var theme = localStorage.getItem('taskx_theme_hex') || '#2563eb';
+          if (!/^#[0-9a-fA-F]{6}$/.test(theme)) theme = '#2563eb';
+          var apple = document.querySelector('link[rel="apple-touch-icon"]');
+          if (apple) apple.setAttribute('href', '/icons/' + icon + '-180.png');
+          var fav = document.querySelector('link[rel="icon"]');
+          if (fav) fav.setAttribute('href', '/icons/' + icon + '.svg');
+          var manifests = document.querySelectorAll('link[rel="manifest"]');
+          var manifestHref = '/manifests/' + icon + '.webmanifest';
+          if (manifests.length === 0) {
+            var m = document.createElement('link');
+            m.rel = 'manifest';
+            m.href = manifestHref;
+            document.head.appendChild(m);
+          } else {
+            manifests.forEach(function (el, idx) {
+              if (idx === 0) el.setAttribute('href', manifestHref);
+              else el.remove();
+            });
+          }
+          var metaTheme = document.querySelector('meta[name="theme-color"]');
+          if (metaTheme) metaTheme.setAttribute('content', theme);
+        } catch (e) {}
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

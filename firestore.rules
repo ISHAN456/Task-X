@@ -1,0 +1,299 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global safety net: default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function parentUserExists(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function isValidSettings(s) {
+      return s is map
+        && s.keys().hasOnly([
+          'themeMode', 'accentColor', 'density', 'language',
+          'notificationsEnabled', 'highPriorityPush', 'soundEnabled', 'dailyDigestTime',
+          'swipeLeft', 'swipeRight', 'patternLockEnabled', 'patternHash',
+          'tabBarItems', 'tabBarShowLabels', 'widgets', 'appIcon', 'aiEnabled'
+        ])
+        && (!('themeMode' in s) || s.themeMode in ['light', 'dark', 'system'])
+        && (!('accentColor' in s) || (s.accentColor is string && s.accentColor.size() <= 32))
+        && (!('density' in s) || s.density in ['comfortable', 'compact'])
+        && (!('language' in s) || (s.language is string && s.language.size() <= 16))
+        && (!('notificationsEnabled' in s) || s.notificationsEnabled is bool)
+        && (!('highPriorityPush' in s) || s.highPriorityPush is bool)
+        && (!('soundEnabled' in s) || s.soundEnabled is bool)
+        && (!('dailyDigestTime' in s) || (s.dailyDigestTime is string && s.dailyDigestTime.size() <= 10))
+        && (!('swipeLeft' in s) || (s.swipeLeft is string && s.swipeLeft.size() <= 32))
+        && (!('swipeRight' in s) || (s.swipeRight is string && s.swipeRight.size() <= 32))
+        && (!('patternLockEnabled' in s) || s.patternLockEnabled is bool)
+        && (!('patternHash' in s) || (s.patternHash is string && s.patternHash.size() <= 64))
+        && (!('tabBarItems' in s) || (s.tabBarItems is list && s.tabBarItems.size() <= 8))
+        && (!('tabBarShowLabels' in s) || s.tabBarShowLabels is bool)
+        && (!('widgets' in s) || s.widgets is map)
+        && (!('appIcon' in s) || (s.appIcon is string && s.appIcon.size() <= 32))
+        && (!('aiEnabled' in s) || s.aiEnabled is bool);
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'displayName', 'email', 'xp', 'level', 'streak', 'longestStreak',
+          'totalCompleted', 'highPriorityCompleted', 'earlyBirdCompleted',
+          'lastCompletedDate', 'unlockedBadges', 'settings', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'displayName', 'email', 'photoURL', 'xp', 'level', 'streak', 'longestStreak',
+          'totalCompleted', 'highPriorityCompleted', 'earlyBirdCompleted',
+          'lastCompletedDate', 'unlockedBadges', 'settings', 'createdAt', 'updatedAt'
+        ])
+        && data.uid == userId
+        && isValidId(data.uid)
+        && data.displayName is string && data.displayName.size() <= 120
+        && data.email is string && data.email.size() <= 200
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 65000))
+        && data.xp is number && data.xp >= 0 && data.xp <= 10000000
+        && data.level is number && data.level >= 1 && data.level <= 100
+        && data.streak is number && data.streak >= 0 && data.streak <= 10000
+        && data.longestStreak is number && data.longestStreak >= 0 && data.longestStreak <= 10000
+        && data.totalCompleted is number && data.totalCompleted >= 0 && data.totalCompleted <= 1000000
+        && data.highPriorityCompleted is number && data.highPriorityCompleted >= 0 && data.highPriorityCompleted <= 1000000
+        && data.earlyBirdCompleted is number && data.earlyBirdCompleted >= 0 && data.earlyBirdCompleted <= 1000000
+        && data.lastCompletedDate is string && data.lastCompletedDate.size() <= 20
+        && data.unlockedBadges is list && data.unlockedBadges.size() <= 30
+        && (data.unlockedBadges.size() == 0 || data.unlockedBadges[0] is string)
+        && isValidSettings(data.settings)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTask(data, userId, taskId) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'title', 'notes', 'completed', 'completedAt', 'lastCompletedDate',
+          'dueDate', 'reminderTime', 'recurrence', 'customDays', 'priority',
+          'folderId', 'tags', 'subtasks', 'calendarEventId', 'archived', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id', 'ownerId', 'title', 'notes', 'completed', 'completedAt', 'lastCompletedDate',
+          'dueDate', 'reminderTime', 'recurrence', 'customDays', 'priority',
+          'folderId', 'tags', 'subtasks', 'calendarEventId', 'archived', 'createdAt', 'updatedAt'
+        ])
+        && data.id == taskId && isValidId(data.id)
+        && data.ownerId == userId && isValidId(data.ownerId)
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 240
+        && data.notes is string && data.notes.size() <= 2000
+        && data.completed is bool
+        && data.completedAt is string && data.completedAt.size() <= 40
+        && data.lastCompletedDate is string && data.lastCompletedDate.size() <= 20
+        && data.dueDate is string && data.dueDate.size() <= 20
+        && data.reminderTime is string && data.reminderTime.size() <= 10
+        && data.recurrence in ['none', 'daily', 'weekdays', 'weekends', 'weekly', 'custom']
+        && data.customDays is list && data.customDays.size() <= 7
+        && (data.customDays.size() == 0 || data.customDays[0] is number)
+        && data.priority in ['low', 'medium', 'high']
+        && data.folderId is string && data.folderId.size() <= 128
+        && data.tags is list && data.tags.size() <= 10
+        && (data.tags.size() == 0 || data.tags[0] is string)
+        && data.subtasks is list && data.subtasks.size() <= 20
+        && (data.subtasks.size() == 0 || data.subtasks[0] is map)
+        && data.calendarEventId is string && data.calendarEventId.size() <= 256
+        && data.archived is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidFolder(data, userId, folderId) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'color', 'icon', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'name', 'color', 'icon', 'createdAt', 'updatedAt'])
+        && data.id == folderId && isValidId(data.id)
+        && data.ownerId == userId && isValidId(data.ownerId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 60
+        && data.color is string && data.color.size() <= 32
+        && data.icon is string && data.icon.size() <= 32
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTag(data, userId, tagId) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'color', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'name', 'color', 'createdAt', 'updatedAt'])
+        && data.id == tagId && isValidId(data.id)
+        && data.ownerId == userId && isValidId(data.ownerId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 40
+        && data.color is string && data.color.size() <= 32
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidActivityLog(data, userId, dateId) {
+      return data.keys().hasAll(['date', 'ownerId', 'completedCount', 'highPriorityCount', 'xpEarned', 'updatedAt'])
+        && data.keys().hasOnly(['date', 'ownerId', 'completedCount', 'highPriorityCount', 'xpEarned', 'updatedAt'])
+        && data.date == dateId && isValidId(data.date)
+        && data.ownerId == userId && isValidId(data.ownerId)
+        && data.completedCount is number && data.completedCount >= 0 && data.completedCount <= 10000
+        && data.highPriorityCount is number && data.highPriorityCount >= 0 && data.highPriorityCount <= 10000
+        && data.xpEarned is number && data.xpEarned >= 0 && data.xpEarned <= 1000000
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTemplate(data, userId, templateId) {
+      return data.keys().hasAll(['id', 'ownerId', 'name', 'description', 'tasks', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'ownerId', 'name', 'description', 'tasks', 'createdAt', 'updatedAt'])
+        && data.id == templateId && isValidId(data.id)
+        && data.ownerId == userId && isValidId(data.ownerId)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 80
+        && data.description is string && data.description.size() <= 240
+        && data.tasks is list && data.tasks.size() <= 15
+        && (data.tasks.size() == 0 || data.tasks[0] is map)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId) && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId) && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'xp', 'level', 'streak', 'longestStreak', 'totalCompleted',
+            'highPriorityCompleted', 'earlyBirdCompleted', 'lastCompletedDate',
+            'unlockedBadges', 'updatedAt'
+          ]) ||
+          incoming().diff(existing()).affectedKeys().hasOnly(['settings', 'updatedAt']) ||
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'displayName', 'photoURL', 'xp', 'level', 'streak', 'longestStreak',
+            'totalCompleted', 'highPriorityCompleted', 'earlyBirdCompleted',
+            'lastCompletedDate', 'unlockedBadges', 'settings', 'updatedAt'
+          ])
+        );
+      allow delete: if isValidId(userId) && isOwner(userId);
+
+      match /tasks/{taskId} {
+        allow get: if isValidId(userId) && isValidId(taskId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(taskId) && isOwner(userId)
+          && isValidTask(incoming(), userId, taskId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(taskId) && isOwner(userId)
+          && isValidTask(incoming(), userId, taskId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'completed', 'completedAt', 'lastCompletedDate', 'dueDate', 'archived', 'subtasks', 'updatedAt'
+            ]) ||
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'notes', 'dueDate', 'reminderTime', 'recurrence', 'customDays',
+              'priority', 'folderId', 'tags', 'subtasks', 'calendarEventId',
+              'archived', 'completed', 'completedAt', 'lastCompletedDate', 'updatedAt'
+            ])
+          );
+        allow delete: if isValidId(userId) && isValidId(taskId) && isOwner(userId);
+      }
+
+      match /folders/{folderId} {
+        allow get: if isValidId(userId) && isValidId(folderId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(folderId) && isOwner(userId)
+          && isValidFolder(incoming(), userId, folderId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(folderId) && isOwner(userId)
+          && isValidFolder(incoming(), userId, folderId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'color', 'icon', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(folderId) && isOwner(userId);
+      }
+
+      match /tags/{tagId} {
+        allow get: if isValidId(userId) && isValidId(tagId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(tagId) && isOwner(userId)
+          && isValidTag(incoming(), userId, tagId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(tagId) && isOwner(userId)
+          && isValidTag(incoming(), userId, tagId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'color', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(tagId) && isOwner(userId);
+      }
+
+      match /activityLogs/{dateId} {
+        allow get: if isValidId(userId) && isValidId(dateId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(dateId) && isOwner(userId)
+          && isValidActivityLog(incoming(), userId, dateId)
+          && parentUserExists(userId)
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(dateId) && isOwner(userId)
+          && isValidActivityLog(incoming(), userId, dateId)
+          && incoming().date == existing().date
+          && incoming().ownerId == existing().ownerId
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['completedCount', 'highPriorityCount', 'xpEarned', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(dateId) && isOwner(userId);
+      }
+
+      match /templates/{templateId} {
+        allow get: if isValidId(userId) && isValidId(templateId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+        allow create: if isValidId(userId) && isValidId(templateId) && isOwner(userId)
+          && isValidTemplate(incoming(), userId, templateId)
+          && parentUserExists(userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+        allow update: if isValidId(userId) && isValidId(templateId) && isOwner(userId)
+          && isValidTemplate(incoming(), userId, templateId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'description', 'tasks', 'updatedAt']);
+        allow delete: if isValidId(userId) && isValidId(templateId) && isOwner(userId);
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Task X",
+  "description": "Minimalist daily task planner and recurring reminder studio with cloud sync, Google Calendar deadlines, progress analytics, streaks, badges, and smart AI assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
